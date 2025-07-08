@@ -66,6 +66,8 @@ Employees ➔ Offices on officeCode
 🗓️ Monthly order breakdown by Product Line and Ranking Category
 
 📦 Low Stock Items identified using stock_requirement DAX measure
+![image](https://github.com/user-attachments/assets/15385745-35d8-414e-a5e5-9f3da7c95a44)
+
 
 🧮 DAX Measures Analysis
 
