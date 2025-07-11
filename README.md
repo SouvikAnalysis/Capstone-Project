@@ -1,135 +1,156 @@
-🚀 Swiggy Power BI Ranking Dashboard
+# 📊 Power BI Restaurant Sales & User Analysis Dashboard
 
-This Power BI project provides ranking-based performance analysis for Swiggy's sales and delivery data across various metrics like order quantity, customer types, sales trends, and product categories. The 
+This Power BI project provides a comprehensive analysis of restaurant orders, sales trends, user performance, and dynamic city rankings using DAX and interactive visuals.
 
-dashboard helps stakeholders quickly assess top-performing products, customer trends, delivery insights, and seasonal variations.
+## 🔖 Description
 
-📂 Data Source:
+**"Restaurant Sales & User Behavior Dashboard using Power BI"**  
+This Power BI report analyzes restaurant sales, customer orders, and performance metrics across different cities and years. It includes dynamic rankings, top-N filters, user segmentation, and restaurant rating insights—powered by DAX measures and advanced visualizations.
 
-All data tables (Customers, Orders, Order_Details, Products, Product_Lines, Offices, Employees, Payments, Rank Table) are sourced from Excel files.
+## 🛠️ Tools & Technologies
 
-🗂️ Data Model
+- **Power BI Desktop**
+- **DAX (Data Analysis Expressions)**
+- **Power Query**
+- **Data Modeling & Relationships**
 
-The model follows a snowflake schema with proper normalization to optimize performance and ensure data accuracy.
+## 📂 Project Structure
 
-📊 Fact Table:
+| File Name               | Description                           |
+|------------------------|---------------------------------------|
+| `Overview.png`         | Dashboard overview screen             |
+| `City_Overview.png`    | City-wise breakdown and trends        |
+| `Insights.png`         | Key business insights                 |
+| `User_Performance.png` | Detailed user-level analysis          |
+| `Restaurant_Analysis.png` | Restaurant metrics and ratings     |
 
-Order_Details: Contains transactional sales and delivery data including order numbers, product codes, quantities, prices, and profits.
+<img width="1472" height="773" alt="image" src="https://github.com/user-attachments/assets/06ed8c15-a1b6-4417-b792-c0a5de145422" />
 
-🗃️ Dimension Tables:
+---
 
-Orders: Order metadata (order date, year, month)
+## 🗂️ Data Source
 
-Customers: Customer information (city, country, customer type)
+This Power BI project is built using a custom dataset composed of restaurant order transactions, user data, and restaurant information.
 
-Products: Product details (product name, product line, pricing)
-
-Product_Lines: Product categories
-
-Offices: Company office locations
-
-Employees: Sales reps and their office assignments
-
-Payments: Payment data for each order
-
-Rank Table: Custom ranking logic (Top 5, Top 10, Top 20, Top 30, Top 100)
-
-🔗 Key Relationships:
-Orders ➔ Order_Details on orderNumber
-
-Customers ➔ Orders on customerNumber
-
-Products ➔ Order_Details on productCode
-
-Product_Lines ➔ Products on productLine
-
-Employees ➔ Offices on officeCode
-
-📑 Report Pages & Visuals Breakdown
-
-📄 Page 1: Executive Summary
-
-✅ Total Profit, Total Orders, Total Customers
-
-✅ Top Ranked Products based on dynamic selection (Top 5, Top 10, etc.)
-
-📈 Order Trends: Monthly order trends and YoY comparisons
-
-🌍 Customer Geo Distribution: Visualizes orders by region and customer type
-
-🔝 Ranking Table: Allows users to dynamically filter product performance based on custom rank selections (Top 5, Top 10, etc.)
-
-📄 Page 2: Detailed Product Ranking & Trends
-
-📊 Visuals: Sales and Quantity by Product, Product Line, and Customer Type
-
-🗓️ Monthly order breakdown by Product Line and Ranking Category
-
-📦 Low Stock Items identified using stock_requirement DAX measure
-![image](https://github.com/user-attachments/assets/15385745-35d8-414e-a5e5-9f3da7c95a44)
+- **Orders Table**: Transaction-level data with city, year, order type, quantity, and value.
+- **Users Table**: User-level data with unique identifiers and total sales.
+- **Restaurant Table**: Details like restaurant ID, ratings, and location.
+- **Rank Table**: Manually created to filter top-N cities dynamically.
 
 
-🧮 DAX Measures Analysis
 
-📌 Top Ranked Products (Dynamic Selection via Rank Table)
- 
-     Rank Table = DATATABLE(
-    "Sort", INTEGER, "Type", STRING, "NO", INTEGER,
-    {
-        {0, "Default", 0},
-        {1, "Top 5", 5},
-        {2, "Top 10", 10},
-        {3, "Top 20", 20},
-        {4, "Top 30", 30},
-        {5, "Top 100", 100}
-    }
-    )
-    
-📌 MostOrderedProduct:
- 
-    MostOrderedProduct = 
-    SELECTCOLUMNS(
-        TOPN(
-            1, 
-            SUMMARIZE('Products', Products[productName], "TotalOrdered", SUM('Order_Details'[quantityOrdered])),
-            [TotalOrdered], DESC
-        ), 
-        "MostOrderedProduct", 'Products'[productName]
-    )
-    
-📌 Total Profit:
+## 🧩 Data Model – ERD (Entity Relationship Diagram)
 
-    Total_Profit = SUM(Order_Details[Profit])
+#### 🔗 Relationships (Star Schema)
+```
+        ┌────────────┐       ┌────────────┐
+        │  Users     │       │ Restaurant │
+        │ (Dim Table)│       │ (Dim Table)│
+        └────┬───────┘       └────┬───────┘
+             │                      │
+             │                      │
+        ┌────▼───────┐         ┌────▼───────┐
+        │  Orders    │◄────────┤ Rank Table │
+        │ (Fact)     │         │ (Dim Table)│
+        └────────────┘         └────────────┘
+```
 
-📌 Monthly and Yearly Breakdown:
+### 🔗 Relationships & Keys
 
-    Month_Number = Orders[orderDate].[MonthNo]
-    Order_Year = Orders[orderDate].[Year]
-    
-📌 Stock Requirement (Low Stock Flag):
+| From Table  | Key Column         | To Table     | Key Column         | Cardinality    |
+|-------------|--------------------|--------------|---------------------|----------------|
+| Orders      | `User_id`          | Users        | `User_id`           | Many-to-One    |
+| Orders      | `Restaurant_id`    | Restaurant   | `Restaurant_id`     | Many-to-One    |
+| Orders      | (Disconnected)     | Rank Table   | —                   | No Relationship|
 
-    stock_requirement = IF(Products[quantityInStock] >= 500, "No", "Yes")
-    
-💡 Key Insights
+## 📐 DAX Measures & Calculations
 
-Dynamic Ranking: Users can switch between Top 5, Top 10, Top 20, etc., to see how rankings impact visual trends.
+### 🔸 General Metrics
+- `Sale_Value = SUM(Orders[Value])`
+- `Total_Quantity_Amount = SUM(Orders[Value])`
+- `Order_Count = COUNTROWS(Orders)`
+- `Users_Count_Order = DISTINCTCOUNT(Orders[User_id])`
+- `Restaurant_Counts = DISTINCTCOUNT(Restaurant[Restaurant_id])`
+- `Users_count = DISTINCTCOUNT(Users[User_id])`
+- `Rating_Counts = COUNT(Restaurant[Rating])`
+- `Average_Ratings = AVERAGE(Restaurant[Rating])`
+- `Total_Cities = DISTINCTCOUNT(Orders[City])`
 
-Total Profit & Order Trends: Seasonal peaks and dips are easily identified.
+### 🔸 Year-based Calculations
+```dax
+Current_Year = MAX(Orders[Year])
+Previous_Year = [Current_Year] - 1
 
-Customer Insights: Concentrated demand in specific cities and customer types.
+Current_Yr_Sale = 
+VAR yr = [Current_Year]
+RETURN CALCULATE([Sale_Value], Orders[Year] = yr)
 
-Low Stock Products: Visual flags for products that require inventory attention.
+Previous_Yr_Sale = 
+VAR yr = [Previous_Year]
+RETURN CALCULATE([Sale_Value], Orders[Year] = yr)
+```
 
-Top Product Performance: High-demand products drive most of the revenue.
+### 🔸 Dynamic Titles
+```dax
+Dynamic Title Top Sales = 
+VAR selectrank = SELECTEDVALUE('Rank Table'[Type])
+VAR selecttype = SELECTEDVALUE(Orders[Type])
+RETURN selectrank & " City " & selecttype
 
-✅ Suggestions for Enhancement
+Dynamic Title Year = 
+VAR selectedtype = SELECTEDVALUE(Orders[Type])
+RETURN selectedtype & " by Year"
+```
 
-➕ Add Year-over-Year (YoY) KPI visuals with conditional formatting.
+### 🔸 Ranking & Filtering Logic
+```dax
+Rank Table = 
+DATATABLE("Sort", INTEGER, "Type", STRING, "NO", INTEGER, {
+  {0,"Default",0}, {3, "Top 5", 5}, {2, "Top 10", 10},
+  {3, "Top 20",20}, {4, "Top 30", 30}, {5, "Top 100",100}
+})
 
-📅 Introduce a dynamic date slicer for more granular trend analysis.
+Top_N_Sales = 
+VAR rankValue = RANKX(ALL(Orders[City]), [Sale_Value], , DESC)
+VAR selectedRank = SELECTEDVALUE('Rank Table'[NO])
+RETURN IF(
+  selectedRank = 0, [Sale_Value],
+  IF(rankValue <= selectedRank, [Sale_Value], BLANK())
+)
 
-🔍 Implement Drillthrough for product-level or customer-level detail.
+Rank = RANKX(ALL(Users), [Total_Sales], , DESC, DENSE)
 
-📦 Build a dedicated Inventory Dashboard using stock requirement insights.
+Top_10%_Customers = 
+VAR TotalUsers = CALCULATE(DISTINCTCOUNT(Users[User_id]))
+VAR TopCount = INT(TotalUsers * 0.1)
+RETURN CALCULATE(SUM([Total_Sales]), FILTER(Users, Users[Rank] <= TopCount))
 
-🗂️ Consider adding Tooltips for deeper context on key visuals.
+Total_Sales = 
+CALCULATE(SUM(Orders[Value]), RELATEDTABLE(Orders), Orders[Type] = "Amount")
+```
+
+## 🔍 Key Insights
+
+- **Top Performing Cities**: Dynamic rankings highlight which cities lead in sales.
+- **User Contribution**: Top 10% of users contribute a large share of revenue.
+- **Restaurant Performance**: Ratings show which restaurants are most liked.
+- **Sales Trends**: Year-over-year comparisons reveal growth or dips.
+- **Order Types**: Helps identify product mix and upsell opportunities.
+- **Customer Engagement**: Tracks active users and total orders.
+
+## 🚀 Enhancements for Future
+
+- **Customer Segmentation** using RFM or clustering.
+- **Geospatial Maps** to analyze performance by area.
+- **Time Intelligence** with rolling averages and forecasts.
+- **Sentiment Analysis** on review data.
+- **Mobile-optimized View** for on-the-go access.
+- **Real-time Data** using APIs or live connections.
+- **Export Options** for filtered views.
+- **Row-Level Security** to protect sensitive data.
+
+## 📌 Author
+
+**Souvik Ghosh**  
+[https://www.linkedin.com/in/souvik-ghosh-/] 
+[https://github.com/SouvikAnalysis]
